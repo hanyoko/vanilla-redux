@@ -5,15 +5,6 @@ const add = document.getElementById("add");
 const minus = document.getElementById("minus");
 const number = document.querySelector("span");
 
-number.innerText = 0;
-
-//상수로 설정한 이유
-//string으로 "ADD" 또는 "MINUS" 로 입력했을 때, 오타를 감지할 수 없다.
-//상수로 설정하고 입력하면 자바스크립트에서 오류를 확인하고 오류를 출력한다 !
-//더 안전한 방법이다.
-const ADD = "ADD";
-const MINUS = "MINUS";
-
 //data를 수정하는 곳
 const countModifier = (count = 0, action) => {
 //countModifier는 현재 상태의 application과 함께 불려지는 function이다
@@ -26,16 +17,16 @@ const countModifier = (count = 0, action) => {
 //reducer가 리턴하는 것은 무엇이든지 어플리케이션의 state
 //리듀서가 current state와 action과 함께 불려진다.
 //어떻게 reducer에게 action을 보내는지 ? -> dispatch를 이용해서
-  
-//if else 조건문 대신 switch로 변경
-  switch (action.type){
-    case ADD :
-      return count + 1;
-    case MINUS :
-      return count - 1;
-    default :
-      return count;
+  if (action.type === "ADD"){
+    //console.log("they are telling me to add one");
+    //만약 아래와 같이 적는다면
+    return count + 1;
+  } else if(action.type === "MINUS"){
+    return count - 1;
+  } else {
+    return count;
   }
+  //console.log(count, action)
 }
 
 const countStore = createStore(countModifier);
@@ -48,14 +39,14 @@ const onChange = () => {
 countStore.subscribe(onChange);
 
 const handleAdd = () => {
-  countStore.dispatch({ type: ADD})
+  countStore.dispatch({ type: "ADD"})
   //dispatch가 리듀서를 불러서 current state와 그리고 내가 보낸 action을 더한다.
   //action은 object여야한다. string이 될 수는 없다.
   //action은 modifier와 communicate 하는 방법이다.
   //만약 change를 store에서 감지하고 싶다면, 그 change를 구독하면 된다.
 }
 const handleMinus = () => {
-  countStore.dispatch({ type: MINUS})
+  countStore.dispatch({ type: "MINUS"})
 }
 
 //add.addEventListener("click", () => countStore.dispatch({ type: "ADD"}));
