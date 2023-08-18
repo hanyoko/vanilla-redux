@@ -1,65 +1,93 @@
 const { createStore } = require("redux");
 
+const form = document.querySelector("form");
+const input = document.querySelector("input");
+const ul = document.querySelector("ul");
 
-const add = document.getElementById("add");
-const minus = document.getElementById("minus");
-const number = document.querySelector("span");
+const ADD_TODO = "ADD_TODO";
+const DELETE_TODO = "DELETE_TODO";
 
-number.innerText = 0;
-
-//상수로 설정한 이유
-//string으로 "ADD" 또는 "MINUS" 로 입력했을 때, 오타를 감지할 수 없다.
-//상수로 설정하고 입력하면 자바스크립트에서 오류를 확인하고 오류를 출력한다 !
-//더 안전한 방법이다.
-const ADD = "ADD";
-const MINUS = "MINUS";
-
-//data를 수정하는 곳
-const countModifier = (count = 0, action) => {
-//countModifier는 현재 상태의 application과 함께 불려지는 function이다
-//현재의 상태가 없다면 0으로 끝난다.
-//그리고 action과 함께 불려진다
-//action은 countModifier과 소통하는 방법 !
-//countModifier가 return하는 것은, application의 state이 된다.
-//reducer가 리턴하는 것은 무엇이든지 application의 state가 된다.
-//만약에 사용자가 "hello"가 리턴하면, 그것이 나의 어플리케이션의 상태가 된다.
-//reducer가 리턴하는 것은 무엇이든지 어플리케이션의 state
-//리듀서가 current state와 action과 함께 불려진다.
-//어떻게 reducer에게 action을 보내는지 ? -> dispatch를 이용해서
-  
-//if else 조건문 대신 switch로 변경
-  switch (action.type){
-    case ADD :
-      return count + 1;
-    case MINUS :
-      return count - 1;
-    default :
-      return count;
+//object를 return 하는 역할
+const addToDo = text => {
+  return {
+    type: ADD_TODO,
+    text
   }
 }
 
-const countStore = createStore(countModifier);
-const onChange = () => { 
-  //console.log("there was a change on the store");
-  console.log(countStore.getState());
-  number.innerText = countStore.getState();
-  //innerText : html을 업데이트 시켜주는 function
+const deleteToDo = id => {
+  return {
+    type: DELETE_TODO,
+    id
+  }
 }
-countStore.subscribe(onChange);
+                //toDos를 수정하지 않고 새로운 걸 만들어서 사용한다
+const reducer = (state = [], action) => {
+  console.log(action);
+  //state를 mutate 하고 있지 않다. 새로운 state를 만들고 있다 !
+  switch(action.type){
+    //새로운 todo가 추가되면 새로운 array를 만들어서 이전에 있던 array의 내용에 플러스한다.
+    //새로운 todo object를 추가
+    case ADD_TODO :
+      const newToDoObj = { text: action.text, id: Date.now() } 
+      return [...state, newToDoObj];
+      //여기서 ...state와 { text: action.text, id: Date.now() }의 순서를 바꿔주면
+      //처음 입력한 todo가 아래로 내려가도록 출력된다. !
+      //지금의 상태는 오래된 todo가 위에 위치한다. !
 
-const handleAdd = () => {
-  countStore.dispatch({ type: ADD})
-  //dispatch가 리듀서를 불러서 current state와 그리고 내가 보낸 action을 더한다.
-  //action은 object여야한다. string이 될 수는 없다.
-  //action은 modifier와 communicate 하는 방법이다.
-  //만약 change를 store에서 감지하고 싶다면, 그 change를 구독하면 된다.
+    //array에서 object를 삭제하고 있지 않다. 삭제할 object를 제외시킨 새로운 array를 만들고 있다.
+    //state에서 object를 삭제하고 있지 않다. 완벽히 새로운 state를 만들고 있다.
+    case DELETE_TODO :
+      const cleaned = state.filter(toDo => toDo.id !== action.id);
+      return cleaned;
+    default :
+      return state;
+  }
 }
-const handleMinus = () => {
-  countStore.dispatch({ type: MINUS})
+
+const store = createStore(reducer)
+store.subscribe(() => console.log(store.getState()));
+
+const paintToDos = () => {
+  //새로운 todo가 생기면 list 전체를 비우고 state에 있는 각각의 toDo를 이용해서 다시 새로운 list를 만든다 !
+  const toDos = store.getState();
+  ul.innerHTML = "";
+  toDos.forEach(toDo => {
+    const li = document.createElement("li");
+    const btn = document.createElement("button");
+    btn.innerText = "DEL";
+    btn.addEventListener("click", dispatchDeleteToDo)
+    li.id = toDo.id;
+    li.innerText = toDo.text;
+    li.appendChild(btn);
+    ul.appendChild(li);
+  })
+}
+store.subscribe(paintToDos);
+
+//action을 dispatch 하기 위한 용도
+const dispatchAddToDo = text => {
+  //여기서 return 하는 object는 dispatch를 위해 이용된다.
+  store.dispatch(addToDo(text));
 }
 
-//add.addEventListener("click", () => countStore.dispatch({ type: "ADD"}));
-//minus.addEventListener("click", () => countStore.dispatch({ type: "MINUS"}));
+const dispatchDeleteToDo = e => {
+  console.log(e.target.parentNode.id);
+  const id = parseInt(e.target.parentNode.id);
+  store.dispatch(deleteToDo(id))
+}
 
-add.addEventListener("click", handleAdd);
-minus.addEventListener("click", handleMinus);
+// const createToDo = toDo => {
+//   const li = document.createElement("li");
+//   li.innerText = toDo;
+//   ul.appendChild(li);
+// };
+
+const onSubmit = e => {
+  e.preventDefault();
+  const toDo = input.value;
+  input.value = "";
+  dispatchAddToDo(toDo);
+};
+
+form.addEventListener("submit", onSubmit);
