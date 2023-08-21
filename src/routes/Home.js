@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { addToDo } from '../store';
+import { addToDo, deleteToDo } from '../store';
+import { Link } from 'react-router-dom';
 
 const Home = () => {
 const [text, setText] = useState('');
@@ -20,6 +21,11 @@ function onSubmit(e) {
     setText('');
 }
 
+const onDelete =(e)=>{
+    const id = e.target.id;
+    dispatch(deleteToDo(id));
+    };
+
 return (
 <>
     <h1> To Do </h1>
@@ -28,8 +34,13 @@ return (
         <button>Add</button>
     </form>
 
-    <ul>{toDos.map((toDo) => (
-        <li key={toDo?.id}>{toDo.text}</li>
+    <ul>{toDos.map((item) => (
+        <div key={item.id}>
+            <Link to={`/${item.text}`}>
+                <li>{item.text}</li>
+            </Link>
+            <button id={item.id} onClick={onDelete}>X</button>
+        </div>
         ))}
     </ul>
 </>
